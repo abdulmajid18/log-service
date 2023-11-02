@@ -1,0 +1,35 @@
+# Compiled Go files
+*.exe
+*.test
+*.prof
+
+# Output of the go coverage tool
+*.out
+
+# Dependency directories
+/bin/
+/pkg/
+/vendor/
+
+# IDE-specific directories (e.g., for Visual Studio Code)
+.idea/
+.vscode/
+
+# Binary executables and files
+*.bin
+*.app
+*.dll
+*.so
+*.dylib
+
+# Log files
+*.log
+
+# Environment-specific files
+.env
+
+# Output files from go generate
+_generate.go
+
+# Compiled binary with debugging information
+*.test
