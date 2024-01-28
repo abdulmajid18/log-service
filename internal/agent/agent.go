@@ -6,10 +6,13 @@ import (
 	"net"
 	"sync"
 
+	"github.com/abdulmajid18/log-service/internal/auth"
 	"github.com/abdulmajid18/log-service/internal/discovery"
 	"github.com/abdulmajid18/log-service/internal/log"
+	"github.com/abdulmajid18/log-service/internal/server"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 type Agent struct {
@@ -78,4 +81,70 @@ func (a *Agent) setupLog() error {
 		log.Config{},
 	)
 	return err
+}
+
+func (a *Agent) setupServer() error {
+	authorizer := auth.New(
+		a.Config.ACLModelFile,
+		a.Config.ACLPolicyFile,
+	)
+
+	severConfig := &server.Config{
+		CommitLog:  a.log,
+		Authorizer: authorizer,
+	}
+
+	var opts []grpc.ServerOption
+	if a.Config.ServerTLSConfig != nil {
+		creds := credentials.NewTLS(a.ServerTLSConfig)
+		opts = append(opts, grpc.Creds(creds))
+	}
+	var err error
+	a.server, err = server.NewGRPCServer(severConfig, opts...)
+	if err != nil {
+		return err
+	}
+	rpcAddr, err := a.RPCAddr()
+	if err != nil {
+		return err
+	}
+	ln, err := net.Listen("tcp", rpcAddr)
+	if err != nil {
+		return nil
+	}
+	go func() {
+		if err := a.server.Serve(ln); err != nil {
+			_ = a.Shutdown()
+		}
+	}()
+	return err
+}
+
+func (a *Agent) Shutdown() error {
+	a.shutdownLock.Lock()
+	defer a.shutdownLock.Lock()
+	if a.shutdown {
+		return nil
+	}
+	a.shutdown = true
+	close(a.shutdowns)
+
+	shutdown := []func() error{
+		a.membership.Leave,
+		a.replicator.Close,
+		func() error {
+			a.server.GracefulStop()
+			return nil
+		},
+		func() error {
+			return a.log.Close()
+		},
+	}
+
+	for _, fn := range shutdown {
+		if err := fn(); err != nil {
+			return nil
+		}
+	}
+	return nil
 }
