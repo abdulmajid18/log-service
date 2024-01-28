@@ -64,7 +64,7 @@ func (r *Replicator) replicate(addr string, leave chan struct{}) {
 	stream, err := client.ConsumeStream(ctx,
 		&api.ConsumeRequest{Offset: 0})
 	if err != nil {
-		r.logger.Sugar().Errorf("%v failed to consume %s", err, addr)
+		r.logError(err, "failed to consume", addr)
 		return
 	}
 	records := make(chan *api.Record)
@@ -72,7 +72,7 @@ func (r *Replicator) replicate(addr string, leave chan struct{}) {
 		for {
 			recv, err := stream.Recv()
 			if err != nil {
-				r.logger.Sugar().Errorf("%v failed to receive %s", err, addr)
+				r.logError(err, "failed to receive", addr)
 				return
 			}
 			records <- recv.Record
@@ -92,7 +92,7 @@ func (r *Replicator) replicate(addr string, leave chan struct{}) {
 				},
 			)
 			if err != nil {
-				r.logger.Sugar().Errorf("%v failed to produce %s", err, addr)
+				r.logError(err, "failed to produce", addr)
 				return
 			}
 		}
@@ -122,4 +122,12 @@ func (r *Replicator) Close() error {
 	r.closed = true
 	close(r.close)
 	return nil
+}
+
+func (r *Replicator) logError(err error, msg, addr string) {
+	r.logger.Error(
+		msg,
+		zap.String("addr", addr),
+		zap.Error(err),
+	)
 }
