@@ -18,13 +18,14 @@ import (
 
 type Agent struct {
 	Config
-	log          *log.Log
-	server       *grpc.Server
-	membership   *discovery.Membership
-	replicator   *log.Replicator
+	log        *log.Log
+	server     *grpc.Server
+	membership *discovery.Membership
+	replicator *log.Replicator
+
 	shutdown     bool
 	shutdowns    chan struct{}
-	shutdownLock sync.Mutex
+	shutDownLock sync.Mutex
 }
 
 type Config struct {
@@ -123,8 +124,8 @@ func (a *Agent) setupServer() error {
 }
 
 func (a *Agent) Shutdown() error {
-	a.shutdownLock.Lock()
-	defer a.shutdownLock.Lock()
+	a.shutDownLock.Lock()
+	defer a.shutDownLock.Unlock()
 	if a.shutdown {
 		return nil
 	}
