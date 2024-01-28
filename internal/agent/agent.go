@@ -50,9 +50,9 @@ func New(config Config) (*Agent, error) {
 	}
 	setup := []func() error{
 		a.setupLogger,
-		a.setupLog,
-		a.setupServer,
-		a.setupMembership,
+		// a.setupLog,
+		// a.setupServer,
+		// a.setupMembership,
 	}
 	for _, fn := range setup {
 		if err := fn(); err != nil {
