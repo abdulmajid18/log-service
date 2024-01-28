@@ -20,6 +20,8 @@ type Replicator struct {
 	close       chan struct{}
 }
 
+// Join adds the server of the given address to list of servers to replicate from
+// Runs the goroutine that runs the replication logic
 func (r *Replicator) Join(name, addr string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -39,6 +41,13 @@ func (r *Replicator) Join(name, addr string) error {
 	return nil
 }
 
+// We use this init() helper to lazily initialize the server map. You should use lazy
+// initialization to give your structs a useful zero value2 because having a useful
+// zero value reduces the API’s size and complexity while maintaining the same
+// functionality. Without a useful zero value, we’d either have to export a replicator
+// constructor function for the user to call or export the servers field on
+// the replicator struct for the user to set—making more API for the user to learn
+// and then requiring them to write more code before they can use our struct.
 func (r *Replicator) init() {
 	if r.logger == nil {
 		r.logger = zap.L().Named("replicator")
@@ -51,23 +60,29 @@ func (r *Replicator) init() {
 	}
 }
 
+// replicates logs received from serf member to the local server
 func (r *Replicator) replicate(addr string, leave chan struct{}) {
 	cc, err := grpc.Dial(addr, r.DialOption...)
 	if err != nil {
-		r.logger.Sugar().Errorf("%v failed to dail %s", err, addr)
+		r.logError(err, " failed to dail ", addr)
 		return
 	}
 	defer cc.Close()
 
 	client := api.NewLogClient(cc)
+
 	ctx := context.Background()
+
 	stream, err := client.ConsumeStream(ctx,
 		&api.ConsumeRequest{Offset: 0})
 	if err != nil {
 		r.logError(err, "failed to consume", addr)
 		return
 	}
+
 	records := make(chan *api.Record)
+
+	// receives all records and pass to records channel
 	go func() {
 		for {
 			recv, err := stream.Recv()
@@ -75,10 +90,12 @@ func (r *Replicator) replicate(addr string, leave chan struct{}) {
 				r.logError(err, "failed to receive", addr)
 				return
 			}
+			// pass records received from client to chan
 			records <- recv.Record
 		}
 	}()
 
+	// produce records from the records chan until the server leaves or fails
 	for {
 		select {
 		case <-r.close:
@@ -93,13 +110,15 @@ func (r *Replicator) replicate(addr string, leave chan struct{}) {
 			)
 			if err != nil {
 				r.logError(err, "failed to produce", addr)
-				return
+				// return
 			}
 		}
 	}
 
 }
 
+// Leave Handles server leaving by removing it from the
+// list of servers to replicate from
 func (r *Replicator) Leave(name string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -112,6 +131,10 @@ func (r *Replicator) Leave(name string) error {
 	return nil
 }
 
+// Close closes the replicator so that it
+// doesn't replicate new servers that join the cluster,
+// and it stops replicating existing servers by causing the replicate() goroutines
+// to return
 func (r *Replicator) Close() error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
