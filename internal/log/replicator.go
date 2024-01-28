@@ -102,15 +102,15 @@ func (r *Replicator) replicate(addr string, leave chan struct{}) {
 			return
 		case <-leave:
 			return
-		case record := <-records:
+		case records := <-records:
 			_, err = r.LocalServer.Produce(ctx,
 				&api.ProduceRequest{
-					Record: record,
+					Record: records,
 				},
 			)
 			if err != nil {
 				r.logError(err, "failed to produce", addr)
-				// return
+				return
 			}
 		}
 	}
