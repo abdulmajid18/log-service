@@ -6,6 +6,7 @@ import (
 	"net"
 	"sync"
 
+	api "github.com/abdulmajid18/log-service/api/v1"
 	"github.com/abdulmajid18/log-service/internal/auth"
 	"github.com/abdulmajid18/log-service/internal/discovery"
 	"github.com/abdulmajid18/log-service/internal/log"
@@ -54,8 +55,8 @@ func New(config Config) (*Agent, error) {
 	setup := []func() error{
 		a.setupLogger,
 		a.setupLog,
-		// a.setupServer,
-		// a.setupMembership,
+		a.setupServer,
+		a.setupMembership,
 	}
 	for _, fn := range setup {
 		if err := fn(); err != nil {
@@ -147,4 +148,36 @@ func (a *Agent) Shutdown() error {
 		}
 	}
 	return nil
+}
+
+func (a *Agent) setupMembership() error {
+	rpcAddr, err := a.Config.RPCAddr()
+	if err != nil {
+		return nil
+	}
+
+	var opts []grpc.DialOption
+	if a.Config.PeerTLSConfig != nil {
+		opts = append(opts, grpc.WithTransportCredentials(
+			credentials.NewTLS(a.Config.PeerTLSConfig),
+		))
+	}
+	conn, err := grpc.Dial(rpcAddr, opts...)
+	if err != nil {
+		return err
+	}
+	client := api.NewLogClient(conn)
+	a.replicator = &log.Replicator{
+		DialOption:  opts,
+		LocalServer: client,
+	}
+	a.membership, err = discovery.New(a.replicator, discovery.Config{
+		NodeName: a.NodeName,
+		BindAddr: a.BindAddr,
+		Tags: map[string]string{
+			"rpc_addr": rpcAddr,
+		},
+		StartJoinAddrs: a.StartJoinAddrs,
+	})
+	return err
 }
