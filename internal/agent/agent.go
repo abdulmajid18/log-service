@@ -111,10 +111,11 @@ func (a *Agent) setupServer() error {
 	}
 	ln, err := net.Listen("tcp", rpcAddr)
 	if err != nil {
-		return nil
+		return err
 	}
 	go func() {
-		if err := a.server.Serve(ln); err != nil {
+		err := a.server.Serve(ln)
+		if err != nil {
 			_ = a.Shutdown()
 		}
 	}()
@@ -137,14 +138,12 @@ func (a *Agent) Shutdown() error {
 			a.server.GracefulStop()
 			return nil
 		},
-		func() error {
-			return a.log.Close()
-		},
+		a.log.Close,
 	}
 
 	for _, fn := range shutdown {
 		if err := fn(); err != nil {
-			return nil
+			return err
 		}
 	}
 	return nil
@@ -159,7 +158,7 @@ func (a *Agent) setupMembership() error {
 	var opts []grpc.DialOption
 	if a.Config.PeerTLSConfig != nil {
 		opts = append(opts, grpc.WithTransportCredentials(
-			credentials.NewTLS(a.Config.PeerTLSConfig),
+			credentials.NewTLS(a.PeerTLSConfig),
 		))
 	}
 	conn, err := grpc.Dial(rpcAddr, opts...)

@@ -43,7 +43,6 @@ func TestAgent(t *testing.T) {
 		bindAddr := fmt.Sprintf("%s:%d", "127.0.0.1", ports[0])
 		rpcPort := ports[1]
 		dataDir, err := os.MkdirTemp("", "agent-test-log")
-		// defer os.ReadDir(dataDir)
 		require.NoError(t, err)
 
 		var startJoinAddrs []string
@@ -65,18 +64,19 @@ func TestAgent(t *testing.T) {
 		})
 		require.NoError(t, err)
 		agents = append(agents, agent)
-
-		defer func() {
-			for _, agent := range agents {
-				err := agent.Shutdown()
-				require.NoError(t, err)
-				require.NoError(t,
-					os.RemoveAll(agent.Config.DataDir),
-				)
-			}
-		}()
-		time.Sleep(3 * time.Second)
 	}
+	defer func() {
+		for _, agent := range agents {
+			err := agent.Shutdown()
+			require.NoError(t, err)
+			require.NoError(t,
+				os.RemoveAll(agent.Config.DataDir),
+			)
+		}
+	}()
+
+	time.Sleep(3 * time.Second)
+
 	leaderClient := client(t, agents[0], peerTLSConfig)
 	produceResponse, err := leaderClient.Produce(
 		context.Background(),
@@ -90,7 +90,7 @@ func TestAgent(t *testing.T) {
 	consumeResponse, err := leaderClient.Consume(
 		context.Background(),
 		&api.ConsumeRequest{
-			Offset: produceResponse.Offset,
+			Offset: 0,
 		},
 	)
 	require.NoError(t, err)
