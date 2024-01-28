@@ -50,7 +50,7 @@ func New(config Config) (*Agent, error) {
 	}
 	setup := []func() error{
 		a.setupLogger,
-		// a.setupLog,
+		a.setupLog,
 		// a.setupServer,
 		// a.setupMembership,
 	}
@@ -69,4 +69,13 @@ func (a *Agent) setupLogger() error {
 	}
 	zap.ReplaceGlobals(logger)
 	return nil
+}
+
+func (a *Agent) setupLog() error {
+	var err error
+	a.log, err = log.NewLog(
+		a.Config.DataDir,
+		log.Config{},
+	)
+	return err
 }
