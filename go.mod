@@ -20,6 +20,7 @@ require (
 	github.com/armon/go-metrics v0.4.1 // indirect
 	github.com/armon/go-radix v1.0.0 // indirect
 	github.com/bgentry/speakeasy v0.1.0 // indirect
+	github.com/boltdb/bolt v1.3.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fatih/color v1.16.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
@@ -44,6 +45,7 @@ require (
 	github.com/hashicorp/mdns v1.0.5 // indirect
 	github.com/hashicorp/memberlist v0.5.0 // indirect
 	github.com/hashicorp/raft v1.6.1 // indirect
+	github.com/hashicorp/raft-boltdb v0.0.0-20231211162105-6c830fa4535e // indirect
 	github.com/hashicorp/serf v0.10.1 // indirect
 	github.com/huandu/xstrings v1.4.0 // indirect
 	github.com/imdario/mergo v0.3.16 // indirect
@@ -82,5 +84,3 @@ require (
 	golang.org/x/tools v0.17.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-replace github.com/hashicorp/raft-boltdb => github.com/abdulmajid18/raft-boltdb v1.0.0
