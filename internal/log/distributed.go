@@ -1,6 +1,8 @@
 package log
 
 import (
+	"time"
+
 	raftboltdb "github.com/hashicorp/raft-boltdb"
 
 	"bytes"
@@ -52,7 +54,25 @@ func (l *DistributedLog) setupRaft(dataDir string) error {
 	if err != nil {
 		return err
 	}
-	stableStore, err := raftboltdb.NewBoltStore(dataDir)
+	stableStore, err := raftboltdb.NewBoltStore(filepath.Join(dataDir, "raft", "stable"))
+	if err != nil {
+		return nil
+	}
+	retain := 1
+	snapshotStore, err := raft.NewFileSnapshotStore(
+		filepath.Join(dataDir, "raft"), retain, os.Stderr,
+	)
+	if err != nil {
+		return err
+	}
+	maxPool := 5
+	timeout := 10 * time.Second
+	transport := raft.NewNetworkTransport(
+		l.config.Raft.StreamLayer,
+		maxPool,
+		timeout,
+		os.Stderr,
+	)
 
 }
 
