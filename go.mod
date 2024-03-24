@@ -11,6 +11,8 @@ require (
 	google.golang.org/protobuf v1.32.0
 )
 
+require go.etcd.io/bbolt v1.3.5 // indirect
+
 require (
 	github.com/Knetic/govaluate v3.0.1-0.20171022003610-9aa49832a739+incompatible // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
@@ -45,7 +47,7 @@ require (
 	github.com/hashicorp/mdns v1.0.5 // indirect
 	github.com/hashicorp/memberlist v0.5.0 // indirect
 	github.com/hashicorp/raft v1.6.1 // indirect
-	github.com/hashicorp/raft-boltdb v0.0.0-20231211162105-6c830fa4535e // indirect
+	github.com/hashicorp/raft-boltdb v0.0.0-20231211162105-6c830fa4535e
 	github.com/hashicorp/serf v0.10.1 // indirect
 	github.com/huandu/xstrings v1.4.0 // indirect
 	github.com/imdario/mergo v0.3.16 // indirect
@@ -62,6 +64,7 @@ require (
 	github.com/ryanuber/columnize v2.1.2+incompatible // indirect
 	github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
+	github.com/soheilhy/cmux v0.1.5 // indirect
 	github.com/spf13/cast v1.6.0 // indirect
 	github.com/travisjeffery/go-dynaport v1.0.0 // indirect
 	go.opencensus.io v0.24.0 // indirect
@@ -84,3 +87,5 @@ require (
 	golang.org/x/tools v0.17.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace github.com/hashicorp/raft-boltdb => github.com/travisjeffery/raft-boltdb v1.0.0
