@@ -141,8 +141,9 @@ func (a *Agent) setupServer() error {
 	)
 
 	severConfig := &server.Config{
-		CommitLog:  a.log,
-		Authorizer: authorizer,
+		CommitLog:   a.log,
+		Authorizer:  authorizer,
+		GetServerer: a.log,
 	}
 
 	var opts []grpc.ServerOption
